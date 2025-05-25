@@ -1,0 +1,11 @@
+# Task ID: 9
+# Title: Implement Security Measures
+# Status: pending
+# Dependencies: 3
+# Priority: medium
+# Description: Ensure secure data handling and user privacy protection.
+# Details:
+Serve all traffic over HTTPS. Set JWT/session cookies with Secure, HttpOnly, and SameSite=Lax attributes. Authorize all API mutations/queries against userId. The project template and dependencies are already set up.
+
+# Test Strategy:
+Perform security testing to ensure all data is transmitted securely and unauthorized access is prevented.

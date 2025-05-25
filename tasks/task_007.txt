@@ -1,0 +1,11 @@
+# Task ID: 7
+# Title: Build Responsive UI/UX
+# Status: pending
+# Dependencies: 1
+# Priority: medium
+# Description: Develop a responsive user interface optimized for both desktop and mobile.
+# Details:
+Use Tailwind CSS and shadcn UI to create a modern, minimalist design. Implement a toggleable light/dark theme. Ensure mobile UI includes bottom navigation for List, Orderings, and Settings. Support optimistic UI updates with rollback on failure. The project template and dependencies are already set up.
+
+# Test Strategy:
+Test UI responsiveness on various devices and screen sizes. Verify theme toggle functionality and bottom navigation on mobile.
