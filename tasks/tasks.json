@@ -64,7 +64,7 @@
             "id": 2,
             "title": "Implement User Registration",
             "description": "Develop the user registration feature using Convex auth.",
-            "status": "pending",
+            "status": "done",
             "dependencies": [1],
             "priority": "medium",
             "details": "Create a registration form that collects email and password. Use Convex auth to handle user registration. Ensure email uniqueness and enforce a minimum 8-character password. Store user credentials securely. The project template and dependencies are already set up.",
@@ -100,7 +100,7 @@
                     "description": "Implement secure storage of user credentials using best practices.",
                     "dependencies": [3],
                     "details": "Ensure that user passwords are hashed and stored securely in the database. Implement measures to protect against common security threats.",
-                    "status": "pending"
+                    "status": "done"
                 }
             ]
         },
