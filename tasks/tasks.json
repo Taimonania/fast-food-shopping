@@ -84,7 +84,7 @@
                     "description": "Add client-side validation to the registration form to ensure data integrity.",
                     "dependencies": [1],
                     "details": "Use JavaScript to validate form inputs such as ensuring the email is in the correct format and the password meets security criteria.",
-                    "status": "pending"
+                    "status": "done"
                 },
                 {
                     "id": 3,
