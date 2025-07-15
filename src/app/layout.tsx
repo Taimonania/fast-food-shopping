@@ -7,6 +7,7 @@ import { ThemeProvider } from 'next-themes';
 
 import NavigationBar from '@/app/(delete-this-and-modify-page.tsx)/NavigationBar';
 import '@/app/globals.css';
+import { ConvexClientProvider } from '@/components/convex-provider';
 import { Toaster } from '@/registry/new-york-v4/ui/sonner';
 
 const geistSans = localFont({
@@ -32,11 +33,13 @@ const Layout = ({ children }: Readonly<{ children: ReactNode }>) => {
         <html suppressHydrationWarning lang='en'>
             <body
                 className={`${geistSans.variable} ${geistMono.variable} bg-background text-foreground overscroll-none antialiased`}>
-                <ThemeProvider attribute='class'>
-                    <NavigationBar />
-                    {children}
-                    <Toaster />
-                </ThemeProvider>
+                <ConvexClientProvider>
+                    <ThemeProvider attribute='class'>
+                        <NavigationBar />
+                        {children}
+                        <Toaster />
+                    </ThemeProvider>
+                </ConvexClientProvider>
             </body>
         </html>
     );

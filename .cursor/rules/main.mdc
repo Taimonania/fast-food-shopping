@@ -23,19 +23,7 @@ It uses `pnpm` as package manager.
 # Code Style & Conventions
 - **Use TypeScript** as the primary language.
 - **Follow best practices for TypeScript**, use strict type safety, clear style conventions, and format with eslint and prettier.
-- Write **JSDoc comments** using the following style:
-  ```TypeScript
-  /**
-    * Brief summary.
-    *
-    * @param param1 - Description.
-    * @param param2 - Description.
-    * @returns Description.
-    */
-    function example(param1: string, param2: number): boolean {
-        return true;
-    }
-  ```
+- **Use existing shadcn components whenever possible. Don't implement your own base components!**
 
 # Testing & Reliability
 - **Always create Jest unit tests for new features** (functions, classes, routes, etc). Implement the tests first, then the feature, leveraging Test-Driven-Development.
