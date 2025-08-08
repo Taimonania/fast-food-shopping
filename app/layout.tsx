@@ -1,7 +1,8 @@
 import type { Metadata } from "next";
 import { Inter } from "next/font/google";
 import "./globals.css";
-import Navbar from "@/components/Navbar/navbar";
+import Navbar from "@/components/navbar/navbar";
+import ConvexClientProvider from "@/components/convex-client-provider";
 
 const inter = Inter({
   variable: "--font-inter",
@@ -23,8 +24,10 @@ export default function RootLayout({
       <body
         className={`${inter.variable} min-h-[calc(100vh-2rem)] flex flex-col gap-4 antialiased`}
       >
-        <Navbar />
-        <main className="px-2 md:px-4 grow flex flex-col">{children}</main>
+        <ConvexClientProvider>
+          <Navbar />
+          <main className="px-2 md:px-4 grow flex flex-col">{children}</main>
+        </ConvexClientProvider>
       </body>
     </html>
   );
