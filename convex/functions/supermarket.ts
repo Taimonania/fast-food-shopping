@@ -1,47 +1,42 @@
-import { query, mutation } from "./_generated/server";
+import { query, mutation } from "../_generated/server";
 import { v } from "convex/values";
 
-// Get all items
 export const list = query({
   args: {},
   handler: async (ctx) => {
-    return await ctx.db.query("items").collect();
+    return await ctx.db.query("supermarkets").collect();
   },
 });
 
-// Get a single item
 export const get = query({
-  args: { id: v.id("items") },
+  args: { id: v.id("supermarkets") },
   handler: async (ctx, args) => {
     return await ctx.db.get(args.id);
   },
 });
 
-// Create a new item
 export const create = mutation({
   args: {
     name: v.string(),
-    description: v.optional(v.string()),
+    location: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
-    return await ctx.db.insert("items", {
+    return await ctx.db.insert("supermarkets", {
       name: args.name,
-      description: args.description,
+      location: args.location,
     });
   },
 });
 
-// Update an item
 export const update = mutation({
   args: {
-    id: v.id("items"),
+    id: v.id("supermarkets"),
     name: v.optional(v.string()),
-    description: v.optional(v.string()),
+    location: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
     const { id, ...updates } = args;
 
-    // Filter out undefined values
     const filteredUpdates = Object.fromEntries(
       Object.entries(updates).filter(([_, value]) => value !== undefined)
     );
@@ -51,21 +46,9 @@ export const update = mutation({
   },
 });
 
-// Delete an item
 export const remove = mutation({
-  args: { id: v.id("items") },
+  args: { id: v.id("supermarkets") },
   handler: async (ctx, args) => {
     await ctx.db.delete(args.id);
-  },
-});
-
-// Search items by name
-export const search = query({
-  args: { searchTerm: v.string() },
-  handler: async (ctx, args) => {
-    const items = await ctx.db.query("items").collect();
-    return items.filter((item) =>
-      item.name.toLowerCase().includes(args.searchTerm.toLowerCase())
-    );
   },
 });

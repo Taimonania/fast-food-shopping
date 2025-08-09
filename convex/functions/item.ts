@@ -1,47 +1,43 @@
-import { query, mutation } from "./_generated/server";
+import { query, mutation } from "../_generated/server";
 import { v } from "convex/values";
 
-// Get all supermarkets
+
 export const list = query({
   args: {},
   handler: async (ctx) => {
-    return await ctx.db.query("supermarkets").collect();
+    return await ctx.db.query("items").collect();
   },
 });
 
-// Get a single supermarket
 export const get = query({
-  args: { id: v.id("supermarkets") },
+  args: { id: v.id("items") },
   handler: async (ctx, args) => {
     return await ctx.db.get(args.id);
   },
 });
 
-// Create a new supermarket
 export const create = mutation({
   args: {
     name: v.string(),
-    location: v.optional(v.string()),
+    description: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
-    return await ctx.db.insert("supermarkets", {
+    return await ctx.db.insert("items", {
       name: args.name,
-      location: args.location,
+      description: args.description,
     });
   },
 });
 
-// Update a supermarket
 export const update = mutation({
   args: {
-    id: v.id("supermarkets"),
+    id: v.id("items"),
     name: v.optional(v.string()),
-    location: v.optional(v.string()),
+    description: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
     const { id, ...updates } = args;
 
-    // Filter out undefined values
     const filteredUpdates = Object.fromEntries(
       Object.entries(updates).filter(([_, value]) => value !== undefined)
     );
@@ -51,9 +47,8 @@ export const update = mutation({
   },
 });
 
-// Delete a supermarket
 export const remove = mutation({
-  args: { id: v.id("supermarkets") },
+  args: { id: v.id("items") },
   handler: async (ctx, args) => {
     await ctx.db.delete(args.id);
   },

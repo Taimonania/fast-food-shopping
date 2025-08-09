@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { ShoppingBasket } from "lucide-react";
-import MenuItem from "./menu-item";
+import MenuItem from "./MenuItem";
 import { SUPERMARKET_PAGE_URL } from "@/lib/constants";
 
 export default function Navbar() {
