@@ -31,7 +31,7 @@ export default function RootLayout({
           <main className="px-4 md:px-16 lg:px-32 pt-8 grow flex flex-col">
             {children}
           </main>
-          <Toaster position="top-center" closeButton/>
+          <Toaster position="top-center" closeButton />
         </ConvexClientProvider>
       </body>
     </html>

@@ -14,8 +14,10 @@ import type {
   FunctionReference,
 } from "convex/server";
 import type * as functions_item from "../functions/item.js";
+import type * as functions_super_order from "../functions/super_order.js";
 import type * as functions_supermarket from "../functions/supermarket.js";
 import type * as tables_item from "../tables/item.js";
+import type * as tables_super_order from "../tables/super_order.js";
 import type * as tables_supermarket from "../tables/supermarket.js";
 
 /**
@@ -28,8 +30,10 @@ import type * as tables_supermarket from "../tables/supermarket.js";
  */
 declare const fullApi: ApiFromModules<{
   "functions/item": typeof functions_item;
+  "functions/super_order": typeof functions_super_order;
   "functions/supermarket": typeof functions_supermarket;
   "tables/item": typeof tables_item;
+  "tables/super_order": typeof tables_super_order;
   "tables/supermarket": typeof tables_supermarket;
 }>;
 export declare const api: FilterApi<

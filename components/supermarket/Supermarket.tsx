@@ -1,10 +1,19 @@
 "use client";
 
 import { api } from "@/convex/_generated/api";
-import { useMutation, useQuery } from "convex/react";
+import { Id } from "@/convex/_generated/dataModel";
+import {
+  createItemSchema,
+  updateItemSchema,
+  type ItemFormData,
+  type UpdateItemFormData,
+} from "@/lib/zod/item";
 import { zodResolver } from "@hookform/resolvers/zod";
+import { useMutation, useQuery } from "convex/react";
+import { useRef, useState } from "react";
 import { useForm } from "react-hook-form";
-import { useRef } from "react";
+import { toast } from "sonner";
+import { Button } from "../ui/button";
 import {
   Card,
   CardAction,
@@ -12,8 +21,9 @@ import {
   CardHeader,
   CardTitle,
 } from "../ui/card";
+import { CheckButton } from "../ui/custom/CheckButton";
 import { DeleteButton } from "../ui/custom/DeleteButton";
-import { Button } from "../ui/button";
+import { EditButton } from "../ui/custom/EditButton";
 import {
   Form,
   FormControl,
@@ -23,16 +33,20 @@ import {
   FormMessage,
 } from "../ui/form";
 import { Input } from "../ui/input";
-import { createItemSchema, type ItemFormData } from "@/lib/zod/item";
 import { SupermarketSkeleton } from "./SupermarketSkeleton";
-import { toast } from "sonner";
-import { Id } from "@/convex/_generated/dataModel";
 
 export default function Supermarket() {
   const supermarkets = useQuery(api.functions.supermarket.list);
   const items = useQuery(api.functions.item.list);
   const removeItem = useMutation(api.functions.item.remove);
   const createItem = useMutation(api.functions.item.create);
+  const updateItem = useMutation(api.functions.item.update);
+
+  const [editingId, setEditingId] = useState<Id<"items"> | null>(null);
+  const [editValues, setEditValues] = useState<{
+    name: string;
+    description: string;
+  }>({ name: "", description: "" });
 
   const nameInputRef = useRef<HTMLInputElement>(null);
 
@@ -42,6 +56,10 @@ export default function Supermarket() {
       name: "",
       description: "",
     },
+  });
+
+  const editForm = useForm<UpdateItemFormData>({
+    resolver: zodResolver(updateItemSchema),
   });
 
   async function onSubmit(data: ItemFormData) {
@@ -57,6 +75,53 @@ export default function Supermarket() {
   const handleDelete = async (id: Id<"items">) => {
     await removeItem({ id });
     toast.success(`The item has been deleted.`);
+  };
+
+  const handleEdit = (item: {
+    _id: Id<"items">;
+    name: string;
+    description?: string;
+  }) => {
+    setEditingId(item._id);
+    setEditValues({
+      name: item.name,
+      description: item.description || "",
+    });
+    editForm.setValue("name", item.name);
+    editForm.setValue("description", item.description || "");
+  };
+
+  const handleSave = async (id: Id<"items">) => {
+    try {
+      const formData = editForm.getValues();
+      await updateItem({
+        id,
+        name: formData.name,
+        description: formData.description || undefined,
+      });
+      setEditingId(null);
+      setEditValues({ name: "", description: "" });
+      toast.success("Item updated successfully");
+    } catch (error) {
+      toast.error("Failed to update item");
+    }
+  };
+
+  const handleCancel = () => {
+    setEditingId(null);
+    setEditValues({ name: "", description: "" });
+    editForm.reset();
+  };
+
+  const handleKeyDown = (e: React.KeyboardEvent, id: Id<"items">) => {
+    if (e.key === "Enter") {
+      e.preventDefault();
+      handleSave(id);
+    }
+    if (e.key === "Escape") {
+      e.preventDefault();
+      handleCancel();
+    }
   };
 
   if (!supermarkets || !items) {
@@ -118,13 +183,65 @@ export default function Supermarket() {
       </div>
 
       <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
-        {items.map((item) => (
+        {items.map(item => (
           <Card key={item._id}>
             <CardHeader>
-              <CardTitle>{item.name}</CardTitle>
-              <CardDescription>{item.description}</CardDescription>
+              {editingId === item._id ? (
+                <Form {...editForm}>
+                  <div className="space-y-2">
+                    <FormField
+                      control={editForm.control}
+                      name="name"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel className="sr-only">Item name</FormLabel>
+                          <FormControl>
+                            <Input
+                              {...field}
+                              className="text-lg font-semibold"
+                              onKeyDown={e => handleKeyDown(e, item._id)}
+                              autoFocus
+                            />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    <FormField
+                      control={editForm.control}
+                      name="description"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel className="sr-only">Description</FormLabel>
+                          <FormControl>
+                            <Input
+                              {...field}
+                              placeholder="Description (optional)"
+                              className="text-sm text-muted-foreground"
+                              onKeyDown={e => handleKeyDown(e, item._id)}
+                            />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                  </div>
+                </Form>
+              ) : (
+                <>
+                  <CardTitle>{item.name}</CardTitle>
+                  <CardDescription>{item.description}</CardDescription>
+                </>
+              )}
               <CardAction>
-                <DeleteButton onClick={() => handleDelete(item._id)} />
+                {editingId === item._id ? (
+                  <CheckButton onClick={() => handleSave(item._id)} />
+                ) : (
+                  <div className="flex gap-1">
+                    <EditButton onClick={() => handleEdit(item)} />
+                    <DeleteButton onClick={() => handleDelete(item._id)} />
+                  </div>
+                )}
               </CardAction>
             </CardHeader>
           </Card>

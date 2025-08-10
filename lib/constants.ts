@@ -1,1 +1,1 @@
-export const SUPERMARKET_PAGE_URL = "supermarket"
+export const SUPERMARKET_PAGE_URL = "supermarket";
