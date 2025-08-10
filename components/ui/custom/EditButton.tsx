@@ -1,5 +1,5 @@
-import { Button } from "../button";
 import { Edit2 } from "lucide-react";
+import { Button } from "../button";
 
 interface EditButtonProps {
   onClick: () => void;

@@ -1,5 +1,5 @@
-import { Button } from "../button";
 import { Check } from "lucide-react";
+import { Button } from "../button";
 
 interface CheckButtonProps {
   onClick: () => void;
