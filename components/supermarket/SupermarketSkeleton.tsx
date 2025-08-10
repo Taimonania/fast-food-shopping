@@ -12,18 +12,53 @@ export function SupermarketSkeleton() {
         </div>
       </div>
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
-        {[...Array(6)].map((_, i) => (
-          <div key={i} className="border rounded-lg p-6 space-y-3">
-            <div className="flex justify-between items-start">
-              <div className="space-y-2 flex-1">
-                <Skeleton className="h-5 w-32" />
-                <Skeleton className="h-4 w-48" />
+      <div className="flex flex-col md:flex-row gap-6">
+        {/* Ordered Items Column */}
+        <div className="flex-1">
+          <Skeleton className="h-6 w-32 mb-4" />
+          <div className="space-y-3">
+            {[...Array(2)].map((_, i) => (
+              <div
+                key={`ordered-${i}`}
+                className="border rounded-lg p-6 opacity-75"
+              >
+                <div className="flex justify-between items-start">
+                  <div className="space-y-2 flex-1">
+                    <Skeleton className="h-5 w-32" />
+                    <Skeleton className="h-4 w-48" />
+                  </div>
+                  <div className="flex gap-1">
+                    <Skeleton className="h-8 w-8" />
+                    <Skeleton className="h-8 w-8" />
+                    <Skeleton className="h-8 w-8" />
+                  </div>
+                </div>
               </div>
-              <Skeleton className="h-9 w-9" />
-            </div>
+            ))}
           </div>
-        ))}
+        </div>
+
+        {/* Unordered Items Column */}
+        <div className="flex-1">
+          <Skeleton className="h-6 w-36 mb-4" />
+          <div className="space-y-3">
+            {[...Array(4)].map((_, i) => (
+              <div key={`unordered-${i}`} className="border rounded-lg p-6">
+                <div className="flex justify-between items-start">
+                  <div className="space-y-2 flex-1">
+                    <Skeleton className="h-5 w-28" />
+                    <Skeleton className="h-4 w-40" />
+                  </div>
+                  <div className="flex gap-1">
+                    <Skeleton className="h-8 w-8" />
+                    <Skeleton className="h-8 w-8" />
+                    <Skeleton className="h-8 w-8" />
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
       </div>
     </div>
   );

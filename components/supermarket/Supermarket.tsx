@@ -1,7 +1,7 @@
 "use client";
 
 import { api } from "@/convex/_generated/api";
-import { Id } from "@/convex/_generated/dataModel";
+import { Doc, Id } from "@/convex/_generated/dataModel";
 import {
   createItemSchema,
   updateItemSchema,
@@ -10,20 +10,12 @@ import {
 } from "@/lib/zod/item";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useMutation, useQuery } from "convex/react";
-import { useRef, useState } from "react";
+import { useMemo, useRef, useState } from "react";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 import { Button } from "../ui/button";
-import {
-  Card,
-  CardAction,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "../ui/card";
-import { CheckButton } from "../ui/custom/CheckButton";
-import { DeleteButton } from "../ui/custom/DeleteButton";
-import { EditButton } from "../ui/custom/EditButton";
+
+import { SuperOrderItem } from "@/convex/functions/super_order";
 import {
   Form,
   FormControl,
@@ -34,20 +26,36 @@ import {
 } from "../ui/form";
 import { Input } from "../ui/input";
 import { SupermarketSkeleton } from "./SupermarketSkeleton";
+import { ItemCard } from "./item/ItemCard";
+import { SortableList } from "./item/SortableList";
+
+const getUnorderedItems = (
+  items?: Doc<"items">[],
+  orderedItems?: SuperOrderItem[]
+) => {
+  if (!items || !orderedItems) return [];
+  return items.filter(
+    item => !orderedItems.some(order => order._id === item._id)
+  );
+};
 
 export default function Supermarket() {
   const supermarkets = useQuery(api.functions.supermarket.list);
+  const supermarketId = useMemo(() => supermarkets?.[0]?._id, [supermarkets]);
   const items = useQuery(api.functions.item.list);
+  const orderedItems = useQuery(
+    api.functions.super_order.list,
+    supermarketId ? { supermarketId } : "skip"
+  );
+  const unorderedItems = useMemo(
+    () => getUnorderedItems(items, orderedItems),
+    [items, orderedItems]
+  );
   const removeItem = useMutation(api.functions.item.remove);
   const createItem = useMutation(api.functions.item.create);
   const updateItem = useMutation(api.functions.item.update);
 
   const [editingId, setEditingId] = useState<Id<"items"> | null>(null);
-  const [editValues, setEditValues] = useState<{
-    name: string;
-    description: string;
-  }>({ name: "", description: "" });
-
   const nameInputRef = useRef<HTMLInputElement>(null);
 
   const form = useForm<ItemFormData>({
@@ -77,16 +85,8 @@ export default function Supermarket() {
     toast.success(`The item has been deleted.`);
   };
 
-  const handleEdit = (item: {
-    _id: Id<"items">;
-    name: string;
-    description?: string;
-  }) => {
+  const handleEdit = (item: Doc<"items">) => {
     setEditingId(item._id);
-    setEditValues({
-      name: item.name,
-      description: item.description || "",
-    });
     editForm.setValue("name", item.name);
     editForm.setValue("description", item.description || "");
   };
@@ -100,7 +100,6 @@ export default function Supermarket() {
         description: formData.description || undefined,
       });
       setEditingId(null);
-      setEditValues({ name: "", description: "" });
       toast.success("Item updated successfully");
     } catch (error) {
       toast.error("Failed to update item");
@@ -109,7 +108,6 @@ export default function Supermarket() {
 
   const handleCancel = () => {
     setEditingId(null);
-    setEditValues({ name: "", description: "" });
     editForm.reset();
   };
 
@@ -124,12 +122,12 @@ export default function Supermarket() {
     }
   };
 
-  if (!supermarkets || !items) {
+  if (!supermarkets || !items || !orderedItems) {
     return <SupermarketSkeleton />;
   }
 
-  if (supermarkets.length === 0 || items.length === 0) {
-    return <div>No supermarkets or items found</div>;
+  if (supermarkets.length === 0) {
+    return <div>No supermarkets found</div>;
   }
 
   return (
@@ -182,70 +180,49 @@ export default function Supermarket() {
         </Form>
       </div>
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
-        {items.map(item => (
-          <Card key={item._id}>
-            <CardHeader>
-              {editingId === item._id ? (
-                <Form {...editForm}>
-                  <div className="space-y-2">
-                    <FormField
-                      control={editForm.control}
-                      name="name"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel className="sr-only">Item name</FormLabel>
-                          <FormControl>
-                            <Input
-                              {...field}
-                              className="text-lg font-semibold"
-                              onKeyDown={e => handleKeyDown(e, item._id)}
-                              autoFocus
-                            />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                    <FormField
-                      control={editForm.control}
-                      name="description"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel className="sr-only">Description</FormLabel>
-                          <FormControl>
-                            <Input
-                              {...field}
-                              placeholder="Description (optional)"
-                              className="text-sm text-muted-foreground"
-                              onKeyDown={e => handleKeyDown(e, item._id)}
-                            />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                  </div>
-                </Form>
-              ) : (
-                <>
-                  <CardTitle>{item.name}</CardTitle>
-                  <CardDescription>{item.description}</CardDescription>
-                </>
-              )}
-              <CardAction>
-                {editingId === item._id ? (
-                  <CheckButton onClick={() => handleSave(item._id)} />
-                ) : (
-                  <div className="flex gap-1">
-                    <EditButton onClick={() => handleEdit(item)} />
-                    <DeleteButton onClick={() => handleDelete(item._id)} />
-                  </div>
-                )}
-              </CardAction>
-            </CardHeader>
-          </Card>
-        ))}
+      <div className="flex flex-col sm:flex-row gap-16">
+        <div className="flex-1">
+          <h3 className="text-lg font-semibold mb-4">Ordered Items</h3>
+          {orderedItems.length === 0 ? (
+            <p className="text-muted-foreground text-center py-8">
+              You have not sorted any items into your supermarket.
+            </p>
+          ) : (
+            <SortableList
+              items={orderedItems}
+              supermarketId={supermarkets[0]._id}
+              editingId={editingId}
+              editForm={editForm}
+              onKeyDown={handleKeyDown}
+              onEdit={handleEdit}
+              onSave={handleSave}
+              onDelete={handleDelete}
+            />
+          )}
+        </div>
+
+        <div className="flex-1">
+          <h3 className="text-lg font-semibold mb-4">Unordered Items</h3>
+          <div className="space-y-3">
+            {unorderedItems.map(item => (
+              <ItemCard
+                key={item._id}
+                item={item}
+                isEditing={editingId === item._id}
+                editForm={editForm}
+                onKeyDown={handleKeyDown}
+                onEdit={handleEdit}
+                onSave={handleSave}
+                onDelete={handleDelete}
+              />
+            ))}
+            {unorderedItems.length === 0 && (
+              <p className="text-muted-foreground text-center py-8">
+                You have sorted all items into your supermarket.
+              </p>
+            )}
+          </div>
+        </div>
       </div>
     </div>
   );

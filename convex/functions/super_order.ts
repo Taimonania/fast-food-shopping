@@ -30,17 +30,42 @@ const insertUnique = async (
   }
 };
 
+export type SuperOrderItem = {
+  _id: Id<"items">;
+  _creationTime: number;
+  name: string;
+  description?: string;
+  orderKey: string;
+  supermarketId: Id<"supermarkets">;
+  itemId: Id<"items">;
+};
+
+// TODO: (potential) improvement: performance with this query
 export const list = query({
   args: {
     supermarketId: v.id("supermarkets"),
   },
-  handler: async (ctx, args) => {
-    return await ctx.db
+  handler: async (ctx, args): Promise<SuperOrderItem[]> => {
+    const superOrders = await ctx.db
       .query("superOrders")
       .withIndex("by_supermarket_order", q =>
         q.eq("supermarketId", args.supermarketId)
       )
       .collect();
+
+    const orderedItemsWithData = await Promise.all(
+      superOrders.map(async order => {
+        const item = await ctx.db.get(order.itemId);
+        if (!item) return null;
+        return {
+          ...item,
+          orderKey: order.orderKey,
+          supermarketId: order.supermarketId,
+        };
+      })
+    );
+
+    return orderedItemsWithData.filter(Boolean) as SuperOrderItem[];
   },
 });
 
