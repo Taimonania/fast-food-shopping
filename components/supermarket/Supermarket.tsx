@@ -27,7 +27,7 @@ import {
 } from "../ui/form";
 import { Input } from "../ui/input";
 import { SupermarketSkeleton } from "./SupermarketSkeleton";
-import { ItemTable } from "./item/ItemTable";
+import { SupermarketTable } from "./SupermarketTable";
 
 const getUnorderedItems = (
   items?: Doc<"items">[],
@@ -54,9 +54,6 @@ export default function Supermarket() {
   const removeItem = useMutation(api.functions.item.remove);
   const createItem = useMutation(api.functions.item.create);
   const updateItem = useMutation(api.functions.item.update);
-  const moveUpItem = useMutation(api.functions.super_order.moveUp);
-  const moveDownItem = useMutation(api.functions.super_order.moveDown);
-  const addToEndItem = useMutation(api.functions.super_order.addToEnd);
 
   const [editingId, setEditingId] = useState<Id<"items"> | null>(null);
   const nameInputRef = useRef<HTMLInputElement>(null);
@@ -134,7 +131,7 @@ export default function Supermarket() {
   }
 
   return (
-    <div className="space-y-6">      
+    <div className="space-y-6">
       <div className="flex flex-col sm:flex-row sm:items-end gap-4 sm:justify-between">
         <h2 className="text-2xl font-semibold">{supermarkets[0].name}</h2>
 
@@ -184,7 +181,7 @@ export default function Supermarket() {
       </div>
 
       {supermarketId && (
-        <ItemTable
+        <SupermarketTable
           orderedItems={orderedItems}
           unorderedItems={unorderedItems}
           supermarketId={supermarketId}
@@ -194,9 +191,6 @@ export default function Supermarket() {
           onEdit={handleEdit}
           onSave={handleSave}
           onDelete={handleDelete}
-          moveUpItem={moveUpItem}
-          moveDownItem={moveDownItem}
-          addToEndItem={addToEndItem}
         />
       )}
     </div>

@@ -1,9 +1,8 @@
 import { Id } from "@/convex/_generated/dataModel";
 import { DisplayableItem } from "@/lib/adapters/item-adapter";
 import { type UpdateItemFormData } from "@/lib/zod/item";
-import { ChevronDown, ChevronUp, HelpCircle, Plus } from "lucide-react";
+import { HelpCircle } from "lucide-react";
 import { UseFormReturn } from "react-hook-form";
-import { Button } from "../../ui/button";
 import {
   Card,
   CardAction,
@@ -11,9 +10,12 @@ import {
   CardHeader,
   CardTitle,
 } from "../../ui/card";
+import { AddButton } from "../../ui/custom/AddButton";
 import { CheckButton } from "../../ui/custom/CheckButton";
 import { DeleteButton } from "../../ui/custom/DeleteButton";
+import { DownButton } from "../../ui/custom/DownButton";
 import { EditButton } from "../../ui/custom/EditButton";
+import { UpButton } from "../../ui/custom/UpButton";
 import {
   Form,
   FormControl,
@@ -36,10 +38,9 @@ interface ItemCardProps {
   onMoveUp?: (id: Id<"items">) => void;
   onMoveDown?: (id: Id<"items">) => void;
   onAddToEnd?: (id: Id<"items">) => void;
-  isFirst?: boolean; // Whether this is the first item in the ordered list
-  isLast?: boolean; // Whether this is the last item in the ordered list
+  isFirst?: boolean;
+  isLast?: boolean;
   className?: string;
-  dragHandle?: React.ReactNode;
 }
 
 export function ItemCard({
@@ -57,52 +58,33 @@ export function ItemCard({
   isFirst = false,
   isLast = false,
   className,
-  dragHandle,
 }: ItemCardProps) {
   return (
     <Card className={className}>
       <CardHeader className="gap-0">
-        <div className="flex items-start gap-3">
+        <div className="flex items-center gap-3">
           <div className="flex items-center gap-2 flex-shrink-0">
-            {orderNumber && onMoveUp && onMoveDown ? (
-              // Ordered items: show move buttons with order number in center
+            {orderNumber && onMoveUp && onMoveDown && (
               <div className="flex flex-row gap-1">
-                <Button
-                  variant="outline"
-                  size="icon"
+                <UpButton
                   onClick={() => onMoveUp(item._id)}
                   disabled={isFirst}
-                  className="cursor-pointer w-6 p-0"
-                >
-                  <ChevronUp className="h-4 w-4" />
-                </Button>
+                />
                 <div className="flex items-center justify-center w-9 h-9 rounded-full bg-muted text-sm font-medium">
                   {orderNumber}
                 </div>
-                <Button
-                  variant="outline"
-                  size="icon"
+                <DownButton
                   onClick={() => onMoveDown(item._id)}
                   disabled={isLast}
-                  className="cursor-pointer w-6 p-0"
-                >
-                  <ChevronDown className="h-4 w-4" />
-                </Button>
+                />
               </div>
-            ) : (
-              // Unordered items: show question mark with add button
+            )}
+            {!orderNumber && onAddToEnd && (
               <div className="flex flex-row gap-1">
-                {onAddToEnd && (
-                  <Button
-                    variant="outline"
-                    size="icon"
-                    onClick={() => onAddToEnd(item._id)}
-                    className="cursor-pointer w-6 p-0"
-                    title="Add to shopping list"
-                  >
-                    <Plus className="h-4 w-4" />
-                  </Button>
-                )}
+                <AddButton
+                  onClick={() => onAddToEnd(item._id)}
+                  title="Add to shopping list"
+                />
                 <div className="flex items-center justify-center w-9 h-9 rounded-full bg-muted text-sm font-medium">
                   <HelpCircle className="w-4 h-4" />
                 </div>
@@ -110,9 +92,8 @@ export function ItemCard({
             )}
           </div>
 
-          {dragHandle}
           <div className="flex-1 min-w-0">
-            {isEditing ? (
+            {isEditing && (
               <Form {...editForm}>
                 <div className="space-y-2">
                   <FormField
@@ -153,7 +134,8 @@ export function ItemCard({
                   />
                 </div>
               </Form>
-            ) : (
+            )}
+            {!isEditing && (
               <>
                 <CardTitle>{item.name}</CardTitle>
                 <CardDescription>{item.description}</CardDescription>
@@ -162,9 +144,8 @@ export function ItemCard({
           </div>
         </div>
         <CardAction>
-          {isEditing ? (
-            <CheckButton onClick={() => onSave(item._id)} />
-          ) : (
+          {isEditing && <CheckButton onClick={() => onSave(item._id)} />}
+          {!isEditing && (
             <div className="flex gap-1">
               <EditButton onClick={() => onEdit(item)} />
               <DeleteButton onClick={() => onDelete(item._id)} />

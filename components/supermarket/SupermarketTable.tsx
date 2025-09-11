@@ -1,6 +1,7 @@
 "use client";
 
 import { Separator } from "@/components/ui/separator";
+import { api } from "@/convex/_generated/api";
 import { Doc, Id } from "@/convex/_generated/dataModel";
 import { SuperOrderItem } from "@/convex/functions/super_order";
 import {
@@ -9,11 +10,12 @@ import {
   adaptRegularItem,
 } from "@/lib/adapters/item-adapter";
 import { type UpdateItemFormData } from "@/lib/zod/item";
+import { useMutation } from "convex/react";
 import { UseFormReturn } from "react-hook-form";
 import { toast } from "sonner";
-import { ItemCard } from "./ItemCard";
+import { ItemCard } from "./item/ItemCard";
 
-interface ItemTableProps {
+interface SupermarketTableProps {
   orderedItems: SuperOrderItem[];
   unorderedItems: Doc<"items">[];
   supermarketId: Id<"supermarkets">;
@@ -23,22 +25,10 @@ interface ItemTableProps {
   onEdit: (item: DisplayableItem) => void;
   onSave: (id: Id<"items">) => void;
   onDelete: (id: Id<"items">) => void;
-  moveUpItem: (args: {
-    itemId: Id<"items">;
-    supermarketId: Id<"supermarkets">;
-  }) => Promise<unknown>;
-  moveDownItem: (args: {
-    itemId: Id<"items">;
-    supermarketId: Id<"supermarkets">;
-  }) => Promise<unknown>;
-  addToEndItem: (args: {
-    itemId: Id<"items">;
-    supermarketId: Id<"supermarkets">;
-  }) => Promise<unknown>;
   className?: string;
 }
 
-export function ItemTable({
+export function SupermarketTable({
   orderedItems,
   unorderedItems,
   supermarketId,
@@ -48,11 +38,11 @@ export function ItemTable({
   onEdit,
   onSave,
   onDelete,
-  moveUpItem,
-  moveDownItem,
-  addToEndItem,
   className,
-}: ItemTableProps) {
+}: SupermarketTableProps) {
+  const moveUpItem = useMutation(api.functions.super_order.moveUp);
+  const moveDownItem = useMutation(api.functions.super_order.moveDown);
+  const addToEndItem = useMutation(api.functions.super_order.addToEnd);
   const sortedOrderedItems = [...orderedItems].sort((a, b) => {
     return a.orderKey.localeCompare(b.orderKey);
   });
@@ -101,7 +91,7 @@ export function ItemTable({
             onEdit={onEdit}
             onSave={onSave}
             onDelete={onDelete}
-            orderNumber={index + 1} // 1-based indexing
+            orderNumber={index + 1}
             onMoveUp={handleMoveUp}
             onMoveDown={handleMoveDown}
             isFirst={index === 0}
