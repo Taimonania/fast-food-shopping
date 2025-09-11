@@ -31,13 +31,12 @@ const insertUnique = async (
 };
 
 export type SuperOrderItem = {
-  _id: Id<"items">;
-  _creationTime: number;
+  _id: Id<"superOrders">;
+  itemId: Id<"items">;
+  supermarketId: Id<"supermarkets">;
   name: string;
   description?: string;
   orderKey: string;
-  supermarketId: Id<"supermarkets">;
-  itemId: Id<"items">;
 };
 
 // TODO: (potential) improvement: performance with this query
@@ -51,6 +50,7 @@ export const list = query({
       .withIndex("by_supermarket_order", q =>
         q.eq("supermarketId", args.supermarketId)
       )
+      .order("asc")
       .collect();
 
     const orderedItemsWithData = await Promise.all(
@@ -58,14 +58,17 @@ export const list = query({
         const item = await ctx.db.get(order.itemId);
         if (!item) return null;
         return {
-          ...item,
-          orderKey: order.orderKey,
+          _id: order._id,
+          itemId: item._id,
           supermarketId: order.supermarketId,
+          name: item.name,
+          description: item.description,
+          orderKey: order.orderKey,
         };
       })
     );
 
-    return orderedItemsWithData.filter(Boolean) as SuperOrderItem[];
+    return orderedItemsWithData.filter(item => item !== null);
   },
 });
 
@@ -77,27 +80,6 @@ export const create = mutation({
   },
   handler: async (ctx, { supermarketId, itemId, orderKey }) => {
     return await insertUnique(ctx, { supermarketId, itemId, orderKey });
-  },
-});
-
-export const createAtStart = mutation({
-  args: {
-    supermarketId: v.id("supermarkets"),
-    itemId: v.id("items"),
-  },
-  handler: async (ctx, { supermarketId, itemId }) => {
-    const first = await ctx.db
-      .query("superOrders")
-      .withIndex("by_supermarket_order", q =>
-        q.eq("supermarketId", supermarketId)
-      )
-      .order("asc")
-      .first();
-
-    const nextKey = first?.orderKey || null;
-    const newKey = generateKeyBetween(null, nextKey);
-
-    return await insertUnique(ctx, { supermarketId, itemId, orderKey: newKey });
   },
 });
 
@@ -115,5 +97,98 @@ export const remove = mutation({
   args: { id: v.id("superOrders") },
   handler: async (ctx, { id }) => {
     await ctx.db.delete(id);
+  },
+});
+
+// Move an item up one spot in the order
+export const moveUp = mutation({
+  args: { itemId: v.id("items"), supermarketId: v.id("supermarkets") },
+  handler: async (ctx, { itemId, supermarketId }) => {
+    // Get all ordered items for this supermarket, sorted by orderKey
+    const allOrders = await ctx.db
+      .query("superOrders")
+      .withIndex("by_supermarket_order", q =>
+        q.eq("supermarketId", supermarketId)
+      )
+      .order("asc")
+      .collect();
+
+    // Find the current item
+    const currentIndex = allOrders.findIndex(order => order.itemId === itemId);
+    if (currentIndex <= 0) return; // Can't move up if it's first or not found
+
+    const currentOrder = allOrders[currentIndex];
+    const previousOrder = allOrders[currentIndex - 1];
+    const beforePrevious =
+      currentIndex > 1 ? allOrders[currentIndex - 2] : null;
+
+    // Generate new order key between beforePrevious and previous
+    const newOrderKey = generateKeyBetween(
+      beforePrevious?.orderKey || null,
+      previousOrder.orderKey
+    );
+
+    // Update the current item's order key
+    await ctx.db.patch(currentOrder._id, { orderKey: newOrderKey });
+    return await ctx.db.get(currentOrder._id);
+  },
+});
+
+// Move an item down one spot in the order
+export const moveDown = mutation({
+  args: { itemId: v.id("items"), supermarketId: v.id("supermarkets") },
+  handler: async (ctx, { itemId, supermarketId }) => {
+    // Get all ordered items for this supermarket, sorted by orderKey
+    const allOrders = await ctx.db
+      .query("superOrders")
+      .withIndex("by_supermarket_order", q =>
+        q.eq("supermarketId", supermarketId)
+      )
+      .order("asc")
+      .collect();
+
+    // Find the current item
+    const currentIndex = allOrders.findIndex(order => order.itemId === itemId);
+    if (currentIndex >= allOrders.length - 1 || currentIndex === -1) return; // Can't move down if it's last or not found
+
+    const currentOrder = allOrders[currentIndex];
+    const nextOrder = allOrders[currentIndex + 1];
+    const afterNext =
+      currentIndex < allOrders.length - 2 ? allOrders[currentIndex + 2] : null;
+
+    // Generate new order key between next and afterNext
+    const newOrderKey = generateKeyBetween(
+      nextOrder.orderKey,
+      afterNext?.orderKey || null
+    );
+
+    // Update the current item's order key
+    await ctx.db.patch(currentOrder._id, { orderKey: newOrderKey });
+    return await ctx.db.get(currentOrder._id);
+  },
+});
+
+// Add an item to the end of the order
+export const addToEnd = mutation({
+  args: { itemId: v.id("items"), supermarketId: v.id("supermarkets") },
+  handler: async (ctx, { itemId, supermarketId }) => {
+    // Get the last ordered item for this supermarket
+    const lastOrder = await ctx.db
+      .query("superOrders")
+      .withIndex("by_supermarket_order", q =>
+        q.eq("supermarketId", supermarketId)
+      )
+      .order("desc")
+      .first();
+
+    // Generate new order key after the last item
+    const newOrderKey = generateKeyBetween(lastOrder?.orderKey || null, null);
+
+    // Use insertUnique to add or update the item
+    return await insertUnique(ctx, {
+      supermarketId,
+      itemId,
+      orderKey: newOrderKey,
+    });
   },
 });

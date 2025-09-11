@@ -16,6 +16,7 @@ import { toast } from "sonner";
 import { Button } from "../ui/button";
 
 import { SuperOrderItem } from "@/convex/functions/super_order";
+import { DisplayableItem } from "@/lib/adapters/item-adapter";
 import {
   Form,
   FormControl,
@@ -26,8 +27,7 @@ import {
 } from "../ui/form";
 import { Input } from "../ui/input";
 import { SupermarketSkeleton } from "./SupermarketSkeleton";
-import { ItemCard } from "./item/ItemCard";
-import { SortableList } from "./item/SortableList";
+import { ItemTable } from "./item/ItemTable";
 
 const getUnorderedItems = (
   items?: Doc<"items">[],
@@ -35,7 +35,7 @@ const getUnorderedItems = (
 ) => {
   if (!items || !orderedItems) return [];
   return items.filter(
-    item => !orderedItems.some(order => order._id === item._id)
+    item => !orderedItems.some(order => order.itemId === item._id)
   );
 };
 
@@ -54,6 +54,9 @@ export default function Supermarket() {
   const removeItem = useMutation(api.functions.item.remove);
   const createItem = useMutation(api.functions.item.create);
   const updateItem = useMutation(api.functions.item.update);
+  const moveUpItem = useMutation(api.functions.super_order.moveUp);
+  const moveDownItem = useMutation(api.functions.super_order.moveDown);
+  const addToEndItem = useMutation(api.functions.super_order.addToEnd);
 
   const [editingId, setEditingId] = useState<Id<"items"> | null>(null);
   const nameInputRef = useRef<HTMLInputElement>(null);
@@ -81,11 +84,11 @@ export default function Supermarket() {
   }
 
   const handleDelete = async (id: Id<"items">) => {
-    await removeItem({ id });
+    void removeItem({ id });
     toast.success(`The item has been deleted.`);
   };
 
-  const handleEdit = (item: Doc<"items">) => {
+  const handleEdit = (item: DisplayableItem) => {
     setEditingId(item._id);
     editForm.setValue("name", item.name);
     editForm.setValue("description", item.description || "");
@@ -101,7 +104,7 @@ export default function Supermarket() {
       });
       setEditingId(null);
       toast.success("Item updated successfully");
-    } catch (error) {
+    } catch {
       toast.error("Failed to update item");
     }
   };
@@ -114,7 +117,7 @@ export default function Supermarket() {
   const handleKeyDown = (e: React.KeyboardEvent, id: Id<"items">) => {
     if (e.key === "Enter") {
       e.preventDefault();
-      handleSave(id);
+      void handleSave(id);
     }
     if (e.key === "Escape") {
       e.preventDefault();
@@ -131,8 +134,8 @@ export default function Supermarket() {
   }
 
   return (
-    <div className="space-y-6">
-      <div className="flex flex-col  sm:flex-row sm:items-end gap-4 sm:justify-between">
+    <div className="space-y-6">      
+      <div className="flex flex-col sm:flex-row sm:items-end gap-4 sm:justify-between">
         <h2 className="text-2xl font-semibold">{supermarkets[0].name}</h2>
 
         <Form {...form}>
@@ -180,50 +183,22 @@ export default function Supermarket() {
         </Form>
       </div>
 
-      <div className="flex flex-col sm:flex-row gap-16">
-        <div className="flex-1">
-          <h3 className="text-lg font-semibold mb-4">Ordered Items</h3>
-          {orderedItems.length === 0 ? (
-            <p className="text-muted-foreground text-center py-8">
-              You have not sorted any items into your supermarket.
-            </p>
-          ) : (
-            <SortableList
-              items={orderedItems}
-              supermarketId={supermarkets[0]._id}
-              editingId={editingId}
-              editForm={editForm}
-              onKeyDown={handleKeyDown}
-              onEdit={handleEdit}
-              onSave={handleSave}
-              onDelete={handleDelete}
-            />
-          )}
-        </div>
-
-        <div className="flex-1">
-          <h3 className="text-lg font-semibold mb-4">Unordered Items</h3>
-          <div className="space-y-3">
-            {unorderedItems.map(item => (
-              <ItemCard
-                key={item._id}
-                item={item}
-                isEditing={editingId === item._id}
-                editForm={editForm}
-                onKeyDown={handleKeyDown}
-                onEdit={handleEdit}
-                onSave={handleSave}
-                onDelete={handleDelete}
-              />
-            ))}
-            {unorderedItems.length === 0 && (
-              <p className="text-muted-foreground text-center py-8">
-                You have sorted all items into your supermarket.
-              </p>
-            )}
-          </div>
-        </div>
-      </div>
+      {supermarketId && (
+        <ItemTable
+          orderedItems={orderedItems}
+          unorderedItems={unorderedItems}
+          supermarketId={supermarketId}
+          editingId={editingId}
+          editForm={editForm}
+          onKeyDown={handleKeyDown}
+          onEdit={handleEdit}
+          onSave={handleSave}
+          onDelete={handleDelete}
+          moveUpItem={moveUpItem}
+          moveDownItem={moveDownItem}
+          addToEndItem={addToEndItem}
+        />
+      )}
     </div>
   );
 }

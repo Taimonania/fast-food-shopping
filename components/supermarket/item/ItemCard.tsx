@@ -1,7 +1,9 @@
-import { Doc, Id } from "@/convex/_generated/dataModel";
-import { SuperOrderItem } from "@/convex/functions/super_order";
+import { Id } from "@/convex/_generated/dataModel";
+import { DisplayableItem } from "@/lib/adapters/item-adapter";
 import { type UpdateItemFormData } from "@/lib/zod/item";
+import { ChevronDown, ChevronUp, HelpCircle, Plus } from "lucide-react";
 import { UseFormReturn } from "react-hook-form";
+import { Button } from "../../ui/button";
 import {
   Card,
   CardAction,
@@ -22,17 +24,20 @@ import {
 } from "../../ui/form";
 import { Input } from "../../ui/input";
 
-// Union type that works for both regular items and ordered items
-type ItemLike = Doc<"items"> | SuperOrderItem;
-
 interface ItemCardProps {
-  item: ItemLike;
+  item: DisplayableItem;
   isEditing: boolean;
   editForm: UseFormReturn<UpdateItemFormData>;
   onKeyDown: (e: React.KeyboardEvent, id: Id<"items">) => void;
-  onEdit: (item: ItemLike) => void;
+  onEdit: (item: DisplayableItem) => void;
   onSave: (id: Id<"items">) => void;
   onDelete: (id: Id<"items">) => void;
+  orderNumber?: number;
+  onMoveUp?: (id: Id<"items">) => void;
+  onMoveDown?: (id: Id<"items">) => void;
+  onAddToEnd?: (id: Id<"items">) => void;
+  isFirst?: boolean; // Whether this is the first item in the ordered list
+  isLast?: boolean; // Whether this is the last item in the ordered list
   className?: string;
   dragHandle?: React.ReactNode;
 }
@@ -45,13 +50,66 @@ export function ItemCard({
   onEdit,
   onSave,
   onDelete,
+  orderNumber,
+  onMoveUp,
+  onMoveDown,
+  onAddToEnd,
+  isFirst = false,
+  isLast = false,
   className,
   dragHandle,
 }: ItemCardProps) {
   return (
     <Card className={className}>
-      <CardHeader>
-        <div className="flex items-start">
+      <CardHeader className="gap-0">
+        <div className="flex items-start gap-3">
+          <div className="flex items-center gap-2 flex-shrink-0">
+            {orderNumber && onMoveUp && onMoveDown ? (
+              // Ordered items: show move buttons with order number in center
+              <div className="flex flex-row gap-1">
+                <Button
+                  variant="outline"
+                  size="icon"
+                  onClick={() => onMoveUp(item._id)}
+                  disabled={isFirst}
+                  className="cursor-pointer w-6 p-0"
+                >
+                  <ChevronUp className="h-4 w-4" />
+                </Button>
+                <div className="flex items-center justify-center w-9 h-9 rounded-full bg-muted text-sm font-medium">
+                  {orderNumber}
+                </div>
+                <Button
+                  variant="outline"
+                  size="icon"
+                  onClick={() => onMoveDown(item._id)}
+                  disabled={isLast}
+                  className="cursor-pointer w-6 p-0"
+                >
+                  <ChevronDown className="h-4 w-4" />
+                </Button>
+              </div>
+            ) : (
+              // Unordered items: show question mark with add button
+              <div className="flex flex-row gap-1">
+                {onAddToEnd && (
+                  <Button
+                    variant="outline"
+                    size="icon"
+                    onClick={() => onAddToEnd(item._id)}
+                    className="cursor-pointer w-6 p-0"
+                    title="Add to shopping list"
+                  >
+                    <Plus className="h-4 w-4" />
+                  </Button>
+                )}
+                <div className="flex items-center justify-center w-9 h-9 rounded-full bg-muted text-sm font-medium">
+                  <HelpCircle className="w-4 h-4" />
+                </div>
+              </div>
+            )}
+          </div>
+
           {dragHandle}
           <div className="flex-1 min-w-0">
             {isEditing ? (
